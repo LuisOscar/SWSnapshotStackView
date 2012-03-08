@@ -146,6 +146,8 @@ SnapshotPosition_t;
 //! Image to display within the snapshot stack view
 @property (nonatomic, retain) UIImage *image;
 
+@property (nonatomic) CGRect imageFrame;
+
 
 // ********************************************************************** //
 
