@@ -119,6 +119,7 @@ SnapshotPosition_t;
   //! Minimum scaling factor was calculated using image width (YES) otherwise
   //! height (NO), stored to avoid recalculation and comparison when drawing.
   BOOL m_scaledUsingWidth;
+  BOOL m_needScaling;
   
   //! Shadow Direction Sign
   //! Support for inversion of shadow base translation, y-axis in iOS 3.2+
