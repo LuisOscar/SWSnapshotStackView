@@ -347,20 +347,16 @@
     // calculateScalingToFitStack:) determine the required scaling to
     // fit the snapshot within the views frame, leaving room for shadows
     CGFloat requiredScaling;
-      if (m_needScaling) {
-        if (YES == m_scaledUsingWidth)
-        {
-          requiredScaling = (self.frame.size.width - 1 - SWSnapshotStackViewStackShadowTotalHeight) / 
-            m_snapshotPositions[m_minScaleShotIdx].boundingRectSize.width;
-        }
-        else
-        {
-          requiredScaling = (self.frame.size.height - 1 - SWSnapshotStackViewStackShadowTotalHeight) / 
-            m_snapshotPositions[m_minScaleShotIdx].boundingRectSize.height;
-        }
-      } else {
-          requiredScaling = 1.0;
-      }
+    if (YES == m_scaledUsingWidth)
+    {
+      requiredScaling = (self.frame.size.width - 1 - SWSnapshotStackViewStackShadowTotalHeight) / 
+        m_snapshotPositions[m_minScaleShotIdx].boundingRectSize.width;
+    }
+    else
+    {
+      requiredScaling = (self.frame.size.height - 1 - SWSnapshotStackViewStackShadowTotalHeight) / 
+        m_snapshotPositions[m_minScaleShotIdx].boundingRectSize.height;
+    }
 
     CGSize matteSize = CGSizeMake (m_image.size.width * requiredScaling,
                                    m_image.size.height * requiredScaling);
@@ -510,9 +506,7 @@
 */
 - (void)calculateScalingToFitStack
 {
-  CGFloat requiredScaling = 1.0;
-    
-  BOOL needScaling = NO;
+    CGFloat requiredScaling = MAXFLOAT;
   
   for (NSInteger idx = 0; idx < SWSnapshotStackViewSnapshotsPerStack; idx++)
   {
@@ -541,18 +535,14 @@
       requiredScaling = requiredWidthScaling;
       m_minScaleShotIdx = idx;
       m_scaledUsingWidth = YES;
-      needScaling = YES;
     }
     if (requiredHeightScaling < requiredScaling)
     {
       requiredScaling = requiredHeightScaling;
       m_minScaleShotIdx = idx;   
       m_scaledUsingWidth = NO;
-      needScaling = YES;
     }
   }
-    
-    m_needScaling = needScaling;
 }
 
 
