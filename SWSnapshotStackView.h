@@ -106,7 +106,10 @@ SnapshotPosition_t;
   
   BOOL m_displayStack;    // property (displayAsStack)
   UIImage *m_image;       // property (image)
-  
+  UIColor *m_strokeColor; // property (strokeColor)
+  CGFloat m_strokeWidth;  // property (strokeWidth)
+    
+    
   //! Aspect Ratio of current image (Width/Height)
   CGFloat m_imageAspect;
 
@@ -145,6 +148,9 @@ SnapshotPosition_t;
 
 //! Image to display within the snapshot stack view
 @property (nonatomic, retain) UIImage *image;
+
+@property (nonatomic, retain) UIColor *strokeColor;
+@property (nonatomic, assign) CGFloat strokeWidth;
 
 
 // ********************************************************************** //

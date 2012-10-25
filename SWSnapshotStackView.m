@@ -101,7 +101,8 @@
 
 @dynamic image;
 @dynamic displayAsStack;
-
+@synthesize strokeColor;
+@synthesize strokeWidth;
 
 // ********************************************************************** //
 //  DYNAMIC PROPERTY METHODS
@@ -265,13 +266,13 @@
 
   // Set fill & stroke colour and stroke line width for rendering of the
   // matte frame around snapshots
-  UIColor *colour = [UIColor whiteColor];
+  UIColor *colour = m_strokeColor;
   [colour setFill];
   colour = [UIColor grayColor];
   [colour setStroke];  
   CGContextSetLineWidth (context, 1.0);
 
-  CGFloat MatteWidthTotal = 2.0 * SWSnapshotStackViewMatteWidth;  
+  CGFloat MatteWidthTotal = 2.0 * m_strokeWidth;  
  
   if (NO == m_displayStack)
   {
@@ -300,8 +301,8 @@
     }
     
     // Create the matte frame rectangle
-    matteFrameRect = CGRectMake (floorf (viewCenter.x - ((scaledImageSize.width / 2.0) + SWSnapshotStackViewMatteWidth)) + 0.5,
-                                 floorf (viewCenter.y - ((scaledImageSize.height / 2.0) + SWSnapshotStackViewMatteWidth + (SWSnapshotStackViewSingleShadowTotalHeight / 2.0))) + 0.5,
+    matteFrameRect = CGRectMake (floorf (viewCenter.x - ((scaledImageSize.width / 2.0) + m_strokeWidth)) + 0.5,
+                                 floorf (viewCenter.y - ((scaledImageSize.height / 2.0) + m_strokeWidth + (SWSnapshotStackViewSingleShadowTotalHeight / 2.0))) + 0.5,
                                  floorf (scaledImageSize.width + MatteWidthTotal) - 1.0,
                                  floorf (scaledImageSize.height + MatteWidthTotal) - 1.0);
     
@@ -471,8 +472,8 @@
   // innser stroke at 0.5 offset) requires subtraction of the offsets and
   // increasing size in both dimension by 1 point to compensate.
   CGRect imageFrame = matteFrameRect;
-  imageFrame.origin.x += SWSnapshotStackViewMatteWidth - 0.5;
-  imageFrame.origin.y += SWSnapshotStackViewMatteWidth - 0.5;
+  imageFrame.origin.x += m_strokeWidth - 0.5;
+  imageFrame.origin.y += m_strokeWidth - 0.5;
   imageFrame.size.width -= MatteWidthTotal - 1;
   imageFrame.size.height -= MatteWidthTotal - 1;
 
