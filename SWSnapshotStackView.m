@@ -101,8 +101,8 @@
 
 @dynamic image;
 @dynamic displayAsStack;
-@synthesize strokeColor;
-@synthesize strokeWidth;
+@synthesize strokeColor = m_strokeColor;
+@synthesize strokeWidth = m_strokeWidth;
 
 // ********************************************************************** //
 //  DYNAMIC PROPERTY METHODS
