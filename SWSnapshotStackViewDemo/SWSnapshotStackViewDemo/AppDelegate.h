@@ -39,7 +39,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////
 
-#import <UIKit/UIKit.h>
+@import UIKit;
 
 #import "RootViewController.h"
 
@@ -51,9 +51,6 @@
 #pragma mark Application Delegate class
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
-{
-  
-}
 
 
 // ********************************************************************** //

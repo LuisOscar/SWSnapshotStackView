@@ -43,7 +43,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////
 
-#import <UIKit/UIKit.h>
+@import UIKit;
 
 #import "SWSnapshotStackView.h"
 
@@ -55,16 +55,6 @@
 #pragma mark Root View Controller class
 
 @interface RootViewController : UIViewController
-{
-  // ******************************************************************** //	
-  // MEMBER VARIABLES  
-  
-  UISwitch *m_displayStackSwitch;
-  UISegmentedControl *m_imageSelection;
-  UILabel *m_imageFrameSize;
-  UISlider *m_sizeSlider;
-  SWSnapshotStackView *m_snapshotStackView;  
-}
 
 
 // ********************************************************************** //
@@ -72,11 +62,11 @@
 
 #pragma mark Properties
 
-@property (nonatomic, retain) IBOutlet UISwitch *displayStackSwitch;
-@property (nonatomic, retain) IBOutlet UILabel *imageFrameSize;
-@property (nonatomic, retain) IBOutlet UISegmentedControl *imageSelection;
-@property (nonatomic, retain) IBOutlet UISlider *sizeSlider;
-@property (nonatomic, retain) IBOutlet SWSnapshotStackView *snapshotStackView;
+@property (nonatomic, weak) IBOutlet UISwitch *displayStackSwitch;
+@property (nonatomic, weak) IBOutlet UILabel *imageFrameSize;
+@property (nonatomic, weak) IBOutlet UISegmentedControl *imageSelection;
+@property (nonatomic, weak) IBOutlet UISlider *sizeSlider;
+@property (nonatomic, weak) IBOutlet SWSnapshotStackView *snapshotStackView;
 
 
 // ********************************************************************** //

@@ -54,19 +54,6 @@
 
 @implementation RootViewController
 
-
-// ********************************************************************** //
-// PROPERTIES
-
-#pragma mark Properties
-
-@synthesize displayStackSwitch = m_displayStackSwitch;
-@synthesize imageFrameSize = m_imageFrameSize;
-@synthesize imageSelection = m_imageSelection;
-@synthesize sizeSlider = m_sizeSlider;
-@synthesize snapshotStackView = m_snapshotStackView;
-
-
 // ********************************************************************** //
 // INSTANCE METHODS
 
@@ -87,32 +74,14 @@
   [super viewDidLoad];
   
 	// Do any additional setup after loading the view, typically from a nib.
-  
-#if 1  
+
   // Tested with the views contentMode set to redraw (forces call to drawRect:
   // on change of views frame) enabled and disabled.
-  m_snapshotStackView.contentMode = UIViewContentModeRedraw;
-#endif  
+  self.snapshotStackView.contentMode = UIViewContentModeRedraw;
   
-  m_snapshotStackView.displayAsStack = m_displayStackSwitch.on;
-  m_snapshotStackView.image = [UIImage imageNamed:@"350D_IMG_3157_20071030w.jpg"];
+  self.snapshotStackView.displayAsStack = self.displayStackSwitch.on;
+  self.snapshotStackView.image = [UIImage imageNamed:@"350D_IMG_3157_20071030w.jpg"];
 }
-
-
-// ********************************************************************** //
-
-- (void)viewDidUnload
-{
-  [super viewDidUnload];
- 
-  // Release any retained subviews of the main view.
-  self.displayStackSwitch = nil;
-  self.imageFrameSize = nil;
-  self.imageSelection = nil;
-  self.sizeSlider = nil;
-  self.snapshotStackView = nil;
-}
-
 
 // ********************************************************************** //
 
@@ -155,7 +124,7 @@
 
 - (IBAction)displayStackSwitchValueChanged:(id)sender
 {
-  m_snapshotStackView.displayAsStack = m_displayStackSwitch.on;
+  self.snapshotStackView.displayAsStack = self.displayStackSwitch.on;
 }
 
 
@@ -163,22 +132,22 @@
 
 - (IBAction)imageSelectionValueChanged:(id)sender
 {
-  switch (m_imageSelection.selectedSegmentIndex)
+  switch (self.imageSelection.selectedSegmentIndex)
   {
     case 0:      
-      m_snapshotStackView.image = [UIImage imageNamed:@"350D_IMG_3157_20071030w.jpg"];
+      self.snapshotStackView.image = [UIImage imageNamed:@"350D_IMG_3157_20071030w.jpg"];
       break;
 
     case 1:
-      m_snapshotStackView.image = [UIImage imageNamed:@"IMG_5737_081229w7sq.jpg"];
+      self.snapshotStackView.image = [UIImage imageNamed:@"IMG_5737_081229w7sq.jpg"];
       break;
      
     case 2:
-      m_snapshotStackView.image = [UIImage imageNamed:@"IMG_2777_080216w6s.jpg"];
+      self.snapshotStackView.image = [UIImage imageNamed:@"IMG_2777_080216w6s.jpg"];
       break;
       
     default:
-      m_snapshotStackView.image = nil;
+      self.snapshotStackView.image = nil;
   }
 }
 
@@ -187,16 +156,17 @@
 
 - (IBAction)sizeSliderValueChanged:(id)sender
 {
-  CGFloat sizeDelta = m_sizeSlider.maximumValue - m_sizeSlider.value;
+  CGFloat sizeDelta = self.sizeSlider.maximumValue - self.sizeSlider.value;
 
-  CGRect newFrame = CGRectMake (floor (20 + (sizeDelta / 2.0)),
-                                floor (20 + (sizeDelta / 2.0)), 
-                                floor (m_sizeSlider.value),
-                                floor (m_sizeSlider.value));
-  m_snapshotStackView.frame = newFrame; 
+  CGRect newFrame = CGRectIntegral(CGRectMake(20 + (sizeDelta / 2.0),
+											  20 + (sizeDelta / 2.0),
+											  self.sizeSlider.value,
+											  self.sizeSlider.value));
+  self.snapshotStackView.frame = newFrame;
   
-  m_imageFrameSize.text = [NSString stringWithFormat:@"(%.0f x %.0f)", floor (m_sizeSlider.value),
-                           floor (m_sizeSlider.value)];
+  self.imageFrameSize.text = [NSString stringWithFormat:@"(%.0f x %.0f)",
+							  floor(self.sizeSlider.value),
+							  floor(self.sizeSlider.value)];
 }
 
 

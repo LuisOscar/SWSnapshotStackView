@@ -44,6 +44,33 @@
 
 #import "SWSnapshotStackView.h"
 
+// ********************************************************************** //
+//  CONSTANTS
+
+#pragma mark Constants
+
+//! Number of snapshots to display within the stack of shots
+const NSUInteger kSnapshotStackViewSnapshotsPerStack = 3;
+
+//! Defines the width of the matte border around a snapshot (each side)
+const CGFloat kSnapshotStackViewMatteWidth = 7.0;
+
+// SINGLE DISPLAY MODE CONSTANTS
+//! Defines X offset for either edge to indent shadow effect (single mode)
+const CGFloat kSnapshotStackViewSingleShadowXOffset = 5.0;
+//! Defines Y offset to drop shadow below snapshot matte frame
+const CGFloat kSnapshotStackViewSingleShadowYOffset = 5.0;
+//! Defines radius of the shadow (results in magnitude and softness of shadow)
+const CGFloat kSnapshotStackViewSingleShadowRadius = 5.0;
+const CGFloat kSnapshotStackViewSingleShadowTotalHeight = kSnapshotStackViewSingleShadowYOffset + kSnapshotStackViewSingleShadowRadius;
+
+// STACK DISPLAY MODE CONSTANTS
+//! Defines Y offset to drop shadow below snapshot matte frame
+const CGFloat kSnapshotStackViewStackShadowYOffset = 2.0;
+//! Defines radius of the shadow (results in magnitude and softness of shadow)
+const CGFloat kSnapshotStackViewStackShadowRadius = 6.0;
+const CGFloat kSnapshotStackViewStackShadowTotalHeight = 2 * kSnapshotStackViewStackShadowRadius - kSnapshotStackViewStackShadowYOffset;
+
 
 // ********************************************************************** //
 // SNAPSHOT STACK VIEW CLASS (PRIVATE METHODS)
@@ -51,7 +78,13 @@
 
 #pragma mark Snapshot Stack View class (Private Interface)
 
-@interface SWSnapshotStackView (Private)
+@interface SWSnapshotStackView () {
+	SnapshotPosition_t m_snapshotPositions[kSnapshotStackViewSnapshotsPerStack];
+}
+
+@property (nonatomic, assign) CGFloat imageAspect;
+@property (nonatomic, assign) NSUInteger minScaleShotIdx;
+@property (nonatomic, assign) BOOL scaledUsingWidth;
 
 //! Perform common initialisation activities
 - (void)commonInitialisation;
@@ -69,75 +102,36 @@
 
 @implementation SWSnapshotStackView
 
-@synthesize imageFrame;
-
-// ********************************************************************** //
-//  CONSTANTS
-
-#pragma mark Constants
-
-//! Defines the width of the matte border around a snapshot (each side)
-#define SWSnapshotStackViewMatteWidth          7.0
-
-// SINGLE DISPLAY MODE CONSTANTS
-//! Defines X offset for either edge to indent shadow effect (single mode)
-#define SWSnapshotStackViewSingleShadowXOffset 5.0
-//! Defines Y offset to drop shadow below snapshot matte frame 
-#define SWSnapshotStackViewSingleShadowYOffset 5.0
-//! Defines radius of the shadow (results in magnitude and softness of shadow)
-#define SWSnapshotStackViewSingleShadowRadius  5.0
-#define SWSnapshotStackViewSingleShadowTotalHeight (SWSnapshotStackViewSingleShadowYOffset + SWSnapshotStackViewSingleShadowRadius)
-
-// STACK DISPLAY MODE CONSTANTS
-//! Defines Y offset to drop shadow below snapshot matte frame 
-#define SWSnapshotStackViewStackShadowYOffset  2.0
-//! Defines radius of the shadow (results in magnitude and softness of shadow)
-#define SWSnapshotStackViewStackShadowRadius   6.0
-#define SWSnapshotStackViewStackShadowTotalHeight ((2 * SWSnapshotStackViewStackShadowRadius) - SWSnapshotStackViewStackShadowYOffset)
-
 
 // ********************************************************************** //
 //  PROPERTIES
 
 #pragma mark Properties
 
-@dynamic image;
-@dynamic displayAsStack;
-@synthesize strokeColor = m_strokeColor;
-@synthesize strokeWidth = m_strokeWidth;
-
 // ********************************************************************** //
 //  DYNAMIC PROPERTY METHODS
 
 #pragma mark Dynamic Property Methods
 
-- (UIImage *)image
-{
-  return (m_image);
-}
-
 - (void)setImage:(UIImage *)image
 {
   // Release previous image, assign and retain new image
-  [m_image release];
-  m_image = [image retain];
+  _image = image;
  
   // If an image is provided, perform some pre-calculations to assist
   // drawing that remain constant for a given image
-  if (nil != m_image)
+  if (_image)
   {
     // Calculate the image aspect ratio, used to determine aspect of
     // image (landscape, square, portrait) which determines the larger
     // dimension required for calculating required scaling
-    m_imageAspect = m_image.size.width / m_image.size.height;
+    self.imageAspect = _image.size.width / _image.size.height;
 
     // When display mode is Stack, rotation of snapshot/image rectangles
     // changes dimensions of bounding rectangle, perform calculations to
     // discover largest bounding rectangle requiring most scaling
-    if (YES == m_displayStack)
-    {
+    if (self.displayAsStack)
       [self calculateScalingToFitStack];
-    }
   }
   
   // Image has change, redraw the view
@@ -147,25 +141,18 @@
 
 // ********************************************************************** //
 
-- (BOOL)displayAsStack
-{
-  return (m_displayStack);
-}
-
 - (void)setDisplayAsStack:(BOOL)displayAsStack
 {
   // Take action only if the requested display mode is differs from current
-  if (displayAsStack != m_displayStack)
+  if (_displayAsStack != displayAsStack)
   {
-    m_displayStack = displayAsStack;
+    _displayAsStack = displayAsStack;
     
     // Rotation of snapshot/image rectangles changes dimensions of bounding
     // rectangle, perform calculations to discover largest bounding rectangle
     // requiring most scaling
-    if ((YES == m_displayStack) && (nil != m_image))
-    {
+    if (_displayAsStack && self.image)
       [self calculateScalingToFitStack];
-    }
     
     // Display mode has changed, redraw the view
     [self setNeedsDisplay];
@@ -178,22 +165,26 @@
 
 #pragma mark Instance Methods
 
-- (id)initWithFrame:(CGRect)frame 
+- (id)initWithFrame:(CGRect)frame
 {
-  if (nil != (self = [super initWithFrame:frame])) 
-  {
-    [self commonInitialisation];
-  }
+  self = [super initWithFrame: frame];
+  if (!self)
+    return nil;
+
+  [self commonInitialisation];
   
-  return (self);
+  return self;
 }
 
-
-// ********************************************************************** //
-
-- (void)awakeFromNib
+- (id)initWithCoder:(NSCoder *)aDecoder
 {
-  [self commonInitialisation];
+	self = [super initWithCoder: aDecoder];
+	if (!self)
+		return nil;
+
+	[self commonInitialisation];
+
+	return self;
 }
 
 
@@ -223,45 +214,23 @@
   m_snapshotPositions[2].angleRotation = 0.0;  
   
   // View's background is transparent underneath the rendered snapshot(s)
-  self.backgroundColor = [UIColor clearColor];
-  
-  // Check system (iOS) version, invert sign of shadow direction when
-  // running on iOS <3.2
-  m_shadowDirSign = 1.0;
-  if (NSOrderedAscending == [[[UIDevice currentDevice] systemVersion] compare:@"3.2" options:NSNumericSearch])
-  {
-    m_shadowDirSign = -1.0;
-  }
+  self.backgroundColor = UIColor.clearColor;
 
   self.strokeColor = UIColor.whiteColor;
-  self.strokeWidth = SWSnapshotStackViewMatteWidth;
+  self.strokeWidth = kSnapshotStackViewMatteWidth;
 }
-
-
-// ********************************************************************** //
-
-- (void)dealloc 
-{
-  [m_image release], m_image = nil;
-  
-  [super dealloc];
-}
-
 
 // ********************************************************************** //
 
 - (void)drawRect:(CGRect)rect 
 {
   // Do nothing if no image is available to display
-  if (nil == m_image)
-  {
+  if (!self.image)
     return;
-  }
   
-  CGContextRef context = UIGraphicsGetCurrentContext ();
+  CGContextRef context = UIGraphicsGetCurrentContext();
   
-  CGPoint viewCenter = 
-    CGPointMake (CGRectGetMidX (self.bounds), CGRectGetMidY (self.bounds));
+  CGPoint viewCenter = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
 
   // Initialise to shut static analyser up, gets confused by stacked display
   // mode processing 'for' loop and conditional 'if (0 == angle of rotation)'
@@ -271,15 +240,15 @@
 
   // Set fill & stroke colour and stroke line width for rendering of the
   // matte frame around snapshots
-  UIColor *colour = m_strokeColor;
+  UIColor *colour = self.strokeColor;
   [colour setFill];
-  colour = [UIColor grayColor];
+  colour = UIColor.grayColor;
   [colour setStroke];  
-  CGContextSetLineWidth (context, 1.0);
+  CGContextSetLineWidth(context, 1.0);
 
-  CGFloat MatteWidthTotal = 2.0 * m_strokeWidth;  
+  CGFloat MatteWidthTotal = 2.0 * self.strokeWidth;
  
-  if (NO == m_displayStack)
+  if (!self.displayAsStack)
   {
     // SINGLE SNAPSHOT DISPLAY MODE
   
@@ -290,63 +259,63 @@
     // have differing aspect ratio to image, scaling factors must be
     // calculated for each dimension and the dimension requiring the
     // most scaling is used to determine the resulting scaled image size
-    CGFloat targetWidth = self.frame.size.width - MatteWidthTotal;
+    CGFloat targetWidth = CGRectGetWidth(self.frame) - MatteWidthTotal;
     CGFloat requiredWidthScaling = targetWidth / self.image.size.width;
-    CGFloat targetHeight = self.frame.size.height - MatteWidthTotal - SWSnapshotStackViewSingleShadowTotalHeight;
+    CGFloat targetHeight = CGRectGetHeight(self.frame) - MatteWidthTotal - kSnapshotStackViewSingleShadowTotalHeight;
     CGFloat requiredHeightScaling = targetHeight / self.image.size.height;
     
     if (requiredWidthScaling <= requiredHeightScaling)
     {
-      scaledImageSize = CGSizeMake (targetWidth, targetWidth / m_imageAspect); 
+      scaledImageSize = CGSizeMake(targetWidth, targetWidth / self.imageAspect);
 
     }
     else 
     {
-      scaledImageSize = CGSizeMake (targetHeight * m_imageAspect, targetHeight);     
+      scaledImageSize = CGSizeMake (targetHeight * self.imageAspect, targetHeight);
     }
     
     // Create the matte frame rectangle
-    matteFrameRect = CGRectMake (floorf (viewCenter.x - ((scaledImageSize.width / 2.0) + m_strokeWidth)) + 0.5,
-                                 floorf (viewCenter.y - ((scaledImageSize.height / 2.0) + m_strokeWidth + (SWSnapshotStackViewSingleShadowTotalHeight / 2.0))) + 0.5,
-                                 floorf (scaledImageSize.width + MatteWidthTotal) - 1.0,
-                                 floorf (scaledImageSize.height + MatteWidthTotal) - 1.0);
+    matteFrameRect = CGRectMake(floorf(viewCenter.x - ((scaledImageSize.width / 2.0) + self.strokeWidth)) + 0.5,
+								floorf(viewCenter.y - ((scaledImageSize.height / 2.0) + self.strokeWidth + (kSnapshotStackViewSingleShadowTotalHeight / 2.0))) + 0.5,
+                                floorf(scaledImageSize.width + MatteWidthTotal) - 1.0,
+                                floorf(scaledImageSize.height + MatteWidthTotal) - 1.0);
     
-    CGContextSaveGState (context);
+    CGContextSaveGState(context);
 
     // Render the curved drop shadow, path is defined from top left hand
     // corner in a clockwise direction
     CGMutablePathRef shadowPath = CGPathCreateMutable ();
-    CGPathMoveToPoint (shadowPath, NULL, 
-                       matteFrameRect.origin.x + SWSnapshotStackViewSingleShadowXOffset,
-                       matteFrameRect.origin.y + matteFrameRect.size.height - SWSnapshotStackViewSingleShadowTotalHeight);
-    CGPathAddLineToPoint (shadowPath, NULL, 
-                          matteFrameRect.origin.x + matteFrameRect.size.width - SWSnapshotStackViewSingleShadowXOffset, 
-                          matteFrameRect.origin.y + matteFrameRect.size.height - SWSnapshotStackViewSingleShadowTotalHeight);
-    CGPathAddLineToPoint (shadowPath, NULL, 
-                          matteFrameRect.origin.x + matteFrameRect.size.width - SWSnapshotStackViewSingleShadowXOffset, 
-                          matteFrameRect.origin.y + matteFrameRect.size.height);
-    CGPathAddQuadCurveToPoint (shadowPath, NULL, 
-                               (matteFrameRect.origin.x + matteFrameRect.size.width) / 2.0, 
-                               matteFrameRect.origin.y + matteFrameRect.size.height - SWSnapshotStackViewSingleShadowTotalHeight, 
-                               matteFrameRect.origin.x + SWSnapshotStackViewSingleShadowXOffset, 
-                               matteFrameRect.origin.y + matteFrameRect.size.height);
+    CGPathMoveToPoint(shadowPath, NULL,
+					  CGRectGetMinX(matteFrameRect) + kSnapshotStackViewSingleShadowXOffset,
+					  CGRectGetMinY(matteFrameRect) + CGRectGetHeight(matteFrameRect) - kSnapshotStackViewSingleShadowTotalHeight);
+    CGPathAddLineToPoint(shadowPath, NULL,
+						 CGRectGetMinX(matteFrameRect) + CGRectGetWidth(matteFrameRect) - kSnapshotStackViewSingleShadowXOffset,
+						 CGRectGetMinY(matteFrameRect) + CGRectGetHeight(matteFrameRect) - kSnapshotStackViewSingleShadowTotalHeight);
+    CGPathAddLineToPoint(shadowPath, NULL,
+						 CGRectGetMinX(matteFrameRect) + CGRectGetWidth(matteFrameRect) - kSnapshotStackViewSingleShadowXOffset,
+						 CGRectGetMinY(matteFrameRect) + CGRectGetHeight(matteFrameRect));
+    CGPathAddQuadCurveToPoint(shadowPath, NULL,
+							  (CGRectGetMinX(matteFrameRect) + matteFrameRect.size.width) / 2.0,
+							  CGRectGetMinY(matteFrameRect) + CGRectGetHeight(matteFrameRect) - kSnapshotStackViewSingleShadowTotalHeight,
+							  CGRectGetMinX(matteFrameRect) + kSnapshotStackViewSingleShadowXOffset,
+							  CGRectGetMinY(matteFrameRect) + CGRectGetHeight(matteFrameRect));
     CGPathCloseSubpath (shadowPath);
     
     // Draw the shadow using it's calculated path
     colour = [UIColor colorWithRed:0 green:0 blue:0.0 alpha:0.6];
-    CGContextSetShadowWithColor (context, CGSizeMake (0, (SWSnapshotStackViewSingleShadowYOffset * m_shadowDirSign)), 
-                                 SWSnapshotStackViewSingleShadowRadius, colour.CGColor);
-    CGContextAddPath (context, shadowPath);
-    CGContextFillPath (context);      
-    CGPathRelease (shadowPath);
+    CGContextSetShadowWithColor(context, CGSizeMake(0, kSnapshotStackViewSingleShadowYOffset),
+								kSnapshotStackViewSingleShadowRadius, colour.CGColor);
+    CGContextAddPath(context, shadowPath);
+    CGContextFillPath(context);
+    CGPathRelease(shadowPath);
       
-    CGContextRestoreGState (context);
+    CGContextRestoreGState(context);
       
     // Draw the matte frame
-    CGPathRef matteFramePath = CGPathCreateWithRect (matteFrameRect, NULL); 
-    CGContextAddPath (context, matteFramePath);
-    CGContextDrawPath (context, kCGPathFillStroke);
-    CGPathRelease (matteFramePath); 
+    CGPathRef matteFramePath = CGPathCreateWithRect(matteFrameRect, NULL);
+    CGContextAddPath(context, matteFramePath);
+    CGContextDrawPath(context, kCGPathFillStroke);
+    CGPathRelease(matteFramePath);
   }
   else
   {
@@ -357,22 +326,22 @@
     // calculateScalingToFitStack:) determine the required scaling to
     // fit the snapshot within the views frame, leaving room for shadows
     CGFloat requiredScaling;
-    if (YES == m_scaledUsingWidth)
+    if (self.scaledUsingWidth)
     {
-      requiredScaling = (self.frame.size.width - 1 - SWSnapshotStackViewStackShadowTotalHeight) / 
-        m_snapshotPositions[m_minScaleShotIdx].boundingRectSize.width;
+      requiredScaling = (CGRectGetWidth(self.frame) - 1 - kSnapshotStackViewStackShadowTotalHeight) /
+        m_snapshotPositions[self.minScaleShotIdx].boundingRectSize.width;
     }
     else
     {
-      requiredScaling = (self.frame.size.height - 1 - SWSnapshotStackViewStackShadowTotalHeight) / 
-        m_snapshotPositions[m_minScaleShotIdx].boundingRectSize.height;
+      requiredScaling = (CGRectGetHeight(self.frame) - 1 - kSnapshotStackViewStackShadowTotalHeight) /
+        m_snapshotPositions[self.minScaleShotIdx].boundingRectSize.height;
     }
 
-    CGSize matteSize = CGSizeMake (m_image.size.width * requiredScaling,
-                                   m_image.size.height * requiredScaling);
+    CGSize matteSize = CGSizeMake (self.image.size.width * requiredScaling,
+                                   self.image.size.height * requiredScaling);
     
     // Draw each snapshot in the stack
-    for (NSInteger shotIdx = 0; shotIdx < SWSnapshotStackViewSnapshotsPerStack; shotIdx++)   
+    for (NSInteger shotIdx = 0; shotIdx < kSnapshotStackViewSnapshotsPerStack; shotIdx++)
     {
       CGContextSaveGState (context);
       
@@ -385,10 +354,10 @@
       if (0.0 == angleRotation)
       {
         matteFrameRect = 
-          CGRectMake (floorf (viewCenter.x - (matteSize.width / 2.0)) + 0.5,
-                      floorf (viewCenter.y - (matteSize.height / 2.0)) + 0.5,
-                      floorf (matteSize.width), floorf (matteSize.height));
-        CGPathAddRect (matteFramePath, NULL, matteFrameRect);
+          CGRectMake(floorf(viewCenter.x - (matteSize.width / 2.0)) + 0.5,
+					 floorf(viewCenter.y - (matteSize.height / 2.0)) + 0.5,
+					 floorf(matteSize.width), floorf(matteSize.height));
+        CGPathAddRect(matteFramePath, NULL, matteFrameRect);
       }
       else
       {
@@ -415,56 +384,56 @@
         {
           // Counter-clockwise rotation
 
-          P1 = CGPointMake (viewCenter.x - halfScaledBoundingRectWidth, 
-                            viewCenter.y - halfScaledBoundingRectHeight - adjacentOnYAxis);
-          P2 = CGPointMake (viewCenter.x + halfScaledBoundingRectWidth + adjacentOnXAxis,
-                            viewCenter.y - halfScaledBoundingRectHeight);
-          P3 = CGPointMake (viewCenter.x + halfScaledBoundingRectWidth, 
-                            viewCenter.y + halfScaledBoundingRectHeight + adjacentOnYAxis);         
-          P4 = CGPointMake (viewCenter.x - halfScaledBoundingRectWidth - adjacentOnXAxis, 
-                            viewCenter.y + halfScaledBoundingRectHeight);
+          P1 = CGPointMake(viewCenter.x - halfScaledBoundingRectWidth,
+                           viewCenter.y - halfScaledBoundingRectHeight - adjacentOnYAxis);
+          P2 = CGPointMake(viewCenter.x + halfScaledBoundingRectWidth + adjacentOnXAxis,
+                           viewCenter.y - halfScaledBoundingRectHeight);
+          P3 = CGPointMake(viewCenter.x + halfScaledBoundingRectWidth,
+                           viewCenter.y + halfScaledBoundingRectHeight + adjacentOnYAxis);
+          P4 = CGPointMake(viewCenter.x - halfScaledBoundingRectWidth - adjacentOnXAxis,
+                           viewCenter.y + halfScaledBoundingRectHeight);
         }
         else
         {
           // Clockwise rotation
           
-          P1 = CGPointMake (viewCenter.x - halfScaledBoundingRectWidth + adjacentOnXAxis,
-                            viewCenter.y - halfScaledBoundingRectHeight);
-          P2 = CGPointMake (viewCenter.x + halfScaledBoundingRectWidth,
-                            viewCenter.y - halfScaledBoundingRectHeight + adjacentOnYAxis);
-          P3 = CGPointMake (viewCenter.x + halfScaledBoundingRectWidth - adjacentOnXAxis, 
-                            viewCenter.y + halfScaledBoundingRectHeight);
-          P4 = CGPointMake (viewCenter.x - halfScaledBoundingRectWidth,
-                            viewCenter.y + halfScaledBoundingRectHeight - adjacentOnYAxis);
+          P1 = CGPointMake(viewCenter.x - halfScaledBoundingRectWidth + adjacentOnXAxis,
+                           viewCenter.y - halfScaledBoundingRectHeight);
+          P2 = CGPointMake(viewCenter.x + halfScaledBoundingRectWidth,
+                           viewCenter.y - halfScaledBoundingRectHeight + adjacentOnYAxis);
+          P3 = CGPointMake(viewCenter.x + halfScaledBoundingRectWidth - adjacentOnXAxis,
+                           viewCenter.y + halfScaledBoundingRectHeight);
+          P4 = CGPointMake(viewCenter.x - halfScaledBoundingRectWidth,
+                           viewCenter.y + halfScaledBoundingRectHeight - adjacentOnYAxis);
         }
         
         // Create path to define the matte frame of the rotated snapshot
-        CGPathMoveToPoint (matteFramePath, NULL, P1.x, P1.y);
-        CGPathAddLineToPoint (matteFramePath, NULL, P2.x, P2.y);
-        CGPathAddLineToPoint (matteFramePath, NULL, P3.x, P3.y);
-        CGPathAddLineToPoint (matteFramePath, NULL, P4.x, P4.y);
-        CGPathCloseSubpath (matteFramePath);
+        CGPathMoveToPoint(matteFramePath, NULL, P1.x, P1.y);
+        CGPathAddLineToPoint(matteFramePath, NULL, P2.x, P2.y);
+        CGPathAddLineToPoint(matteFramePath, NULL, P3.x, P3.y);
+        CGPathAddLineToPoint(matteFramePath, NULL, P4.x, P4.y);
+        CGPathCloseSubpath(matteFramePath);
       }
 
-      CGContextSaveGState (context);
+      CGContextSaveGState(context);
       
       // Draw the snapshot shadow using the matte frames path, offset
       // slightly. Still not 100% happy with the shadow drawing, plan
       // to tweak eventually to get better end effect
       colour = [UIColor colorWithRed:0 green:0 blue:0.0 alpha:0.4];
-      CGContextSetShadowWithColor (context, CGSizeMake (0.0, (SWSnapshotStackViewStackShadowYOffset * m_shadowDirSign)),
-                                   SWSnapshotStackViewStackShadowRadius, colour.CGColor);
-      CGContextAddPath (context, matteFramePath); 
-      CGContextFillPath (context);
+      CGContextSetShadowWithColor(context, CGSizeMake (0.0, kSnapshotStackViewStackShadowYOffset),
+								  kSnapshotStackViewStackShadowRadius, colour.CGColor);
+      CGContextAddPath(context, matteFramePath);
+      CGContextFillPath(context);
       
-      CGContextRestoreGState (context);
+      CGContextRestoreGState(context);
 
       // Draw the matte frame
-      CGContextAddPath (context, matteFramePath);   
-      CGContextDrawPath (context, kCGPathFillStroke);
-      CGPathRelease (matteFramePath);
+      CGContextAddPath(context, matteFramePath);
+      CGContextDrawPath(context, kCGPathFillStroke);
+      CGPathRelease(matteFramePath);
       
-      CGContextRestoreGState (context);
+      CGContextRestoreGState(context);
     }
     
   }
@@ -486,7 +455,7 @@
 
   // Draw the image without manipulation other than correct scaling,
   // could have used CGContextDrawImage() if further drawing required
-  [m_image drawInRect:f];
+  [self.image drawInRect:f];
 }
 
 
@@ -516,14 +485,12 @@
 */
 - (void)calculateScalingToFitStack
 {
-    CGFloat requiredScaling = MAXFLOAT;
-  
-  for (NSInteger idx = 0; idx < SWSnapshotStackViewSnapshotsPerStack; idx++)
+  for (NSInteger idx = 0; idx < kSnapshotStackViewSnapshotsPerStack; idx++)
   {
     // Calculate bounding rectangle of rotated snapshot/image rectangle
     // Direction of rotation is not important given symmetry, only aiming
     // to calculate size, not location after rotation
-    CGSize imageSize = m_image.size;
+    CGSize imageSize = self.image.size;
     CGFloat angleRotation = 
       (fabs(m_snapshotPositions[idx].angleRotation) * (M_PI / 180.0));
     CGSize boundingRect = CGSizeMake ((imageSize.width * cos (angleRotation)) +
@@ -540,15 +507,12 @@
     // Determine if the scaling required for either dimension is the
     // largest (smallest scaling factor) required for any of the snapshots
     // processed thus far
-    if (requiredWidthScaling < requiredHeightScaling)
-    {
-      requiredScaling = requiredWidthScaling;
-      m_minScaleShotIdx = idx;
-      m_scaledUsingWidth = YES;
+    if (requiredWidthScaling < requiredHeightScaling) {
+      self.minScaleShotIdx = idx;
+      self.scaledUsingWidth = YES;
     } else {
-      requiredScaling = requiredHeightScaling;
-      m_minScaleShotIdx = idx;   
-      m_scaledUsingWidth = NO;
+      self.minScaleShotIdx = idx;
+      self.scaledUsingWidth = NO;
     }
   }
 }

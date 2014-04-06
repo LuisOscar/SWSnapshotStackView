@@ -42,7 +42,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////
 
-#import <UIKit/UIKit.h>
+@import UIKit;
 
 
 // ********************************************************************** //
@@ -91,46 +91,6 @@ SnapshotPosition_t;
 
 //! Snapshot Stack Image View
 @interface SWSnapshotStackView : UIView 
-{
-  // ******************************************************************** //	
-  // CONSTANTS
-
-#pragma mark Constants
-
-//! Number of snapshots to display within the stack of shots
-#define SWSnapshotStackViewSnapshotsPerStack 3  
-
-
-  // ******************************************************************** //	
-  // MEMBER VARIABLES
-  
-  BOOL m_displayStack;    // property (displayAsStack)
-  UIImage *m_image;       // property (image)
-  UIColor *m_strokeColor; // property (strokeColor)
-  CGFloat m_strokeWidth;  // property (strokeWidth)
-    
-    
-  //! Aspect Ratio of current image (Width/Height)
-  CGFloat m_imageAspect;
-
-  //! Array of defining the position of each snapshot in the stack, 
-  //! defined from bottom of stack to the top, where the top image in
-  //! the stack always has zero rotation.
-  SnapshotPosition_t m_snapshotPositions[SWSnapshotStackViewSnapshotsPerStack];
-  //! Index to snapshot within the positions array, requiring most scaling //! (minimum scaling factor) to fit within views frame.
-  NSInteger m_minScaleShotIdx;
-  //! Minimum scaling factor was calculated using image width (YES) otherwise
-  //! height (NO), stored to avoid recalculation and comparison when drawing.
-  BOOL m_scaledUsingWidth;
-  
-  //! Shadow Direction Sign
-  //! Support for inversion of shadow base translation, y-axis in iOS 3.2+
-  //! Stored to avoid having to recheck system OS version during redrawing etc.
-  //! In <3.2, positive y, translates shadow DOWN
-  //! In 3.2+, positive y, translates shadow UP
-  //! NOTE: Not required if you do not wish to support iOS <3.2
-  CGFloat m_shadowDirSign;
-}
 
 
 // ********************************************************************** //
@@ -147,9 +107,9 @@ SnapshotPosition_t;
 @property (nonatomic, assign) BOOL displayAsStack;
 
 //! Image to display within the snapshot stack view
-@property (nonatomic, retain) UIImage *image;
+@property (nonatomic, strong) UIImage *image;
 
-@property (nonatomic, retain) UIColor *strokeColor;
+@property (nonatomic, strong) UIColor *strokeColor;
 @property (nonatomic, assign) CGFloat strokeWidth;
 @property (nonatomic, assign) CGRect imageFrame;
 
