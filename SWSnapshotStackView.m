@@ -230,6 +230,9 @@
   {
     m_shadowDirSign = -1.0;
   }
+
+  self.strokeColor = UIColor.whiteColor;
+  self.strokeWidth = SWSnapshotStackViewMatteWidth;
 }
 
 
