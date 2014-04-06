@@ -69,6 +69,8 @@
 
 @implementation SWSnapshotStackView
 
+@synthesize imageFrame;
+
 // ********************************************************************** //
 //  CONSTANTS
 
@@ -474,15 +476,17 @@
   // Hence conversion of the matte frame rectangle (calculated to perform
   // innser stroke at 0.5 offset) requires subtraction of the offsets and
   // increasing size in both dimension by 1 point to compensate.
-  CGRect imageFrame = matteFrameRect;
-  imageFrame.origin.x += m_strokeWidth - 0.5;
-  imageFrame.origin.y += m_strokeWidth - 0.5;
-  imageFrame.size.width -= MatteWidthTotal - 1;
-  imageFrame.size.height -= MatteWidthTotal - 1;
+  CGRect f = matteFrameRect;
+  f.origin.x += self.strokeWidth - 0.5;
+  f.origin.y += self.strokeWidth - 0.5;
+  f.size.width -= MatteWidthTotal - 1;
+  f.size.height -= MatteWidthTotal - 1;
+
+    self.imageFrame = f;
 
   // Draw the image without manipulation other than correct scaling,
   // could have used CGContextDrawImage() if further drawing required
-  [m_image drawInRect:imageFrame];
+  [m_image drawInRect:f];
 }
 
 
@@ -512,7 +516,7 @@
 */
 - (void)calculateScalingToFitStack
 {
-  CGFloat requiredScaling = 1.0;
+    CGFloat requiredScaling = MAXFLOAT;
   
   for (NSInteger idx = 0; idx < SWSnapshotStackViewSnapshotsPerStack; idx++)
   {
